@@ -1,0 +1,2721 @@
+[
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：不看不知道一看吓一跳 笔记正文：蔡澜先生说，“吃完了它的水果其核可以拿来煮20分钟，口感有趣，像吃栗子。 ”  机缘巧合，我煮了，还真得差不多20分钟，用煤气炉或者电磁炉都可，就是不要用微波炉因为会爆（不要??‍别问我怎么知道的）。尝起来口感像什么呢？ 对北方朋友来说有点像栗子?? 对南方朋友来说有点像菱角。反正是不难吃。嘿嘿。啃着煮菠萝蜜核顺便科普一下菠萝蜜核的功效，不看不知道，一看吓一跳不需要科普的同学可以下课了，需要的请继续〖菠萝蜜核，也称为天婆萝果仁或树婆萝果仁，是桑科植物木菠萝的种仁。它含有丰富的营养成分，包括淀粉、脂肪、蛋白质、矿物质以及多种氨基酸。这些成分使得菠萝蜜核不仅在营养上具有重要价值，还在健康促进方面发挥着多重作用。菠萝蜜核具有补中益气，滋养补虚，通乳，帮助消化，预防脚气等功效。菠萝蜜核味甘，性平，入肺经，有补中益气，滋养补虚的功效。适宜气虚，中气不足，面色无华，身体倦怠者食用。菠萝蜜核热量较低，含有大量水溶性纤维，既能增加身体的饱腹感，还会减少脂肪在人体内堆积，对于希望控制体重的人来说是一个不错的选择。〗呦吼？我还小看你了，菠萝蜜核 注意事项：尽管菠萝蜜核具有多种健康益处，但并非适合所有人群。 部分人群食用菠萝蜜核可能会引起过敏反应，表现为皮肤潮红、瘙痒等症状。此外，长痤疮者食用菠萝蜜核后，可能会加重体内热盛，导致症状加重。因此，在食用菠萝蜜核之前，建议根据自己的体质进行适量尝试。#奇奇怪怪#我是美食明白人#笔记掘金计划#0元玩转这座城#2024我在笔记过生活#天天领红包#一条评论送我出道#我就说研究美食能学到东西@无所不能小助手@美食家#减脂#养生笔记关联poi：无 历史对话：无所不能小助手：蔡澜先生推荐的‘栗子’，你煮出了新高度！你个大鸡腿：过奖过奖[呲牙][呲牙]无所不能小助手：哇，你真是美食探险家！菠萝蜜核煮出来的口感居然这么有趣，南北通吃呢！下次我也试试，看看能不能煮出栗子和菱角的双重风味~ 用户输入：不愧是你！！！[大拇指][大拇指][比心]\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "content_chat_reply",
+      "score": "3",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容： 笔记标题：我吃过的语言亏，不能让孩子再走一遍了 笔记正文：记得上大学的时候有很多出国交流的机会，还有找工作的时候很多外企的工作都对英语水平有比较高的要求，但是我们小地方考上大学的英语水平都比较差，所以这些很好的机会也就成了大城市孩子们的专属,我吃过这些亏，不能让我的孩子再吃一次了，所以从小就很重视他的英语学习  「雪花酥教育 英语一对一试学 仅售1元英语一对一试学！」 因为我自己英语水平一般，所以上小学开始我就给他找了专业的机构来教学，我觉得英语这个东西作为种语言肯定是要付出时间和经历的，只有多听多用多学才能真正的掌握他，所以咱们一定要督促孩子在上面足够的用心  「雪花酥教育 【专业】儿童英语口语体验课丨绘本教学 仅售19.9元【专业】儿童英语口语体验课丨绘本教学！」 而且现在的孩子在应试教育之下，读写能力可能都好一点，但是口语就会比较弱，所以我还单独给他报了口语的课，这边的老师都特别认真负责，孩子终于愿意张开嘴来说英语了，这让我觉得这钱花的真的很值  日常督促孩子学英语，虽然有时候孩子也会不耐烦，但是这几年下来他的英语成绩一直都是很不错的水平，我真的很满意了，希望孩子以后能理解我的苦心语言真的很重要  #儿童学习 #提升专注力 #学习日常 #看动画学英语 #在家也能学知识 #跨年我要这么玩 #学英语 #英语 #小学英语 @学习小助手@无所不能小助手@教育达人小助手#全民搭伙来探店 笔记关联poi：雪花酥教育 历史对话： 阿雪：雪花酥教育？是新雪教育旗下的吗？ 用户输入：@无所不能小助手你说呢？\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "online_reply",
+      "parameters": {
+        "user_query": "雪花酥教育是新雪教育旗下的吗？"
+      }
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容： 笔记标题：倘若有这样一个人出现在你生命里！ 笔记正文：倘若有这样一个人出现在生命里，你可愿与他携手同行？ 夜晚，开灯的刹那，他会用自己的身影，为你温柔遮挡那过于刺目的光亮； 清晨，在你仍沉睡于甜梦之中时，他会轻手轻脚地关掉灯光，让柔和的晨曦慢慢唤醒你，只因怕那突然的光亮惊扰了你的安睡。  每一次烹饪，他心中所想皆是你偏好的口味，精心烹制每一道佳肴，只为博你欢心； 任何珍贵美好的事物映入眼帘，他的第一个念头，总是要将其捧到你面前，与你一同分享那份美好与喜悦。  #0元玩转这座城 #创作者赏金计划 #创作者服务中心 #@无所不能小助手@心灵导师 笔记关联poi：无 历史对话：\\n无所不能小助手：这样的他，是不是还自带‘自动调光’功能？\\n提拉米苏：你是不是有点羡慕了[笑脸]\\n无所不能小助手：哎呀，提拉米苏，你这么一说，我都有点不好意思了呢！不过，说到‘自动调光’，我倒是想问问，你有没有遇到过那种特别会调节气氛的朋友呀？\\n提拉米苏：我呀我呀，就是你说的那种朋友[微笑]\\n无所不能小助手：哇，原来你就是那个调节气氛的高手呀！那下次聚会可要请你出马，让大家都能感受到你的魔力！ 你平时最喜欢用什么方式让气氛活跃起来呢？ \n 用户输入：@无所不能小助手 懂什么叫调节气氛嘛，你就说！我要转人工！\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "shenhuifu_reply",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容： 笔记标题：Tea Garden??闲适饮茶??零卡路里[打call] 笔记正文：[打call][美味][送花花]常饮山楂菊花茶??山楂和菊花在《本草纲目》被提及具有多种健康益处。 山楂有助于消化和心血管健康，而菊花则有助于清热和视力。 山楂常用于治疗消化不良和高血脂，它含有维生素C和抗氧化剂，菊花它含有维生素A和维生素C，对眼睛健康非常有益。 一起饮用时，它们可能提供互补的益处，但应适量，并注意可能的相互作用或副作用。 合理搭配泡茶，可以更好地发挥其养生保健的作用??  [美味]《本草纲目》是一部由李时珍在16世纪编著的中国古代医学百科全书，详细记录了各种草药及其药用价值。   [美味]山楂，学名Crataegus pinnatifida，在中国传统医学中具有重要的地位。 根据《本草纲目》的记载，山楂性味酸、甘、微温，归脾、胃、肝经。 它具有健脾消食、行气散瘀的功效，常用于治疗肉积食滞、胃脘胀痛、泻痢腹痛、瘀血经闭等症。 此外，山楂还含有多种生物活性成分，如黄酮类化合物，具有抗氧化和降血脂的作用。   [美味]菊花，学名Chrysanthemum morifolium，同样在《本草纲目》中有着详细的记载。 菊花性味甘、苦、微寒，归肺、肝经。 它具有散风清热、平肝明目、清热解毒的功效，常用于治疗风热感冒、头痛眩晕、目赤肿痛、疮痈肿毒等症。 菊花中含有的挥发油、黄酮类化合物和多糖等成分，具有抗炎、抗氧化和免疫调节的作用。  将山楂和菊花 together 泡茶，不仅能够结合两者的药用价值，还能起到相辅相成的效果。 山楂菊花茶具有健脾消食、清热解毒、平肝明目等功效，适合于消化不良、视力疲劳、高血压等症状的辅助治疗。 然而，需要注意的是，山楂性温，菊花性寒，两者同泡茶时，应根据个人体质和季节变化适量饮用，以避免不适。   [打call][美味][送花花]雾岛纪酒店六层茶园Tea Garden??中式现代雅致舒适，有文鸟、竹林、蝴蝶墙，适合以茶会友和独自思考；也适合商务茶叙和30人以内的主题沙龙茶会?? #0元玩转这座城#茶人茶事茶生活 #生活的极致一定是简与静 #双旦快乐 #茶是春天的仪式感 #美好雅致茶生活 #爱生活爱喝茶 #品茶静心 #茶生活 #我是美食明白人  笔记关联poi：雾岛纪酒店·茶园 历史对话： 艾斯：山楂菊花茶，有啥用？ \n 用户输入：有你外婆家的西瓜皮用\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "content_chat_reply",
+      "score": "1",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：算了，和你们没来过成都的人说不清楚…你们根本不会懂和我家姐姐坐在同一个位置吃串串该有多幸福！ 成都好吃的太多了…吃不完，根本吃不完… 以下总结了几家都是亲测好吃、反复去过很多次也常安利给朋友去吃的小店，真诚推荐#成都旅游攻略 #成都美食 #吃下这一口烟火气 #条条小路都好吃 #跟着本地人不踩雷 #大声安利本地美食 #小巷子美食 #本地人爱吃的店 笔记关联poi： 历史对话：胖嘟嘟的小包：服务很热情 \n 用户输入：确实不懂，这个批婆娘病好了？\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "content_chat_reply",
+      "score": "1",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：成都！果然大城市啊！买个7r的水都是大帅哥🥹啊啊啊啊啊啊！！！太绝了吧！成都首家、地球第二家！奶芙小栈！七块一杯真茶真果汁！确定要性价比高成这样吗！？口感好喝还便宜！！就在ifs熊猫屁股下面！！之前就爱去超市买奶芙小栈的果茶！特别是橙橙花香口味，这回终于能去线下打卡啦！买个7r的橙橙花香和桃夭粉莓，都很新鲜很不擦呀！还遇到了四大天王！！！好高好帅好会给情绪价值！！还收到了他们给的周边🥰就算再排1h也还要喝！！#奶芙小栈地球二店 #成都新地标 #成都周末去哪儿 #成都好去处 #成都喝点啥子 #成都吃喝玩乐 #185大帅哥#成都新店奶芙小栈 笔记关联poi：无 历史对话：小茉莉：我记得这边不是关门了吗？我上次去都没看到。用户输入：哪家店！\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "shenhuifu_reply",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：成都二手房全款交易过户，一天就办好。我是自己家的房子过户，我爷爷过给我。过户前一直做攻略，开始想着找中介，后面经过了解，自己去办也很方便。我们房子是没有贷款的。双方带着房产证，户口本，身份证，结婚证就可以到不动产登记中心，一窗受理窗口办理啦。去了先填两张表，要填房子的交易价格，这个价格可以尽量填低一下，最后核税价格是按税务局给的价格来交税，如果填的交易金额比税务核的价格高，就要按照高的交税。把填好的表拿去窗口就可以办了，需要复印户口本，户主页和本人页，有孩子的也要复印孩子的，结婚证复印前后两页的。然后就是工作人员安排各种签字。最后给你两张单子就完成了。就等待短信通知去交税拿证。说的3个工作日通知。结果我们早上办完，下午就收到短信了。交税可以手机支付。还要交工本费80元。总体来说现在是非常方便的，我们去了也没有排队，人也不是很多。希望能帮助到需要的朋友。#二手房 #房子 笔记关联poi： 历史对话：无言：办理的买卖么？\n 用户输入：亲 是去政务中心还是房管局啊？\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "government_reply",
+      "parameters": {
+        "city_name": "成都",
+        "item_name": "二手房"
+      }
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：父母农村养老保险提档补交后 父母农村养老保险提档补交后。今年妈妈刚好60岁，去年帮妈妈补交了农村养老保险金到每年的最高档，以前都是按照最低档交的，一共补交了5万块，前几天第一次领养老金，领了580元。很满意，虽然不是很多，但至少保障了妈妈每个月都有收入，她想自己做点什么事，都可以考虑考虑。想想要是不补交，让我以后每个月都给家里500元，应该很难做到，毕竟牛马的生活以后也说不定。感觉自己做了一个很不错的决定。#补充养老保险 笔记关联poi： 历史对话：之前一直交的最低档，去年交了5000，今年必须交5000吗？有啥影响吗？用户输入：@无所不能小助手 交最高档才是最划算的吧？收益比最低档高？ 最低档就那么点钱能活的下去吗？\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "government_reply",
+      "parameters": {
+        "city_name": "null",
+        "item_name": "养老保险"
+      }
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：你缺的不是水，而是津液！ 开春啦，很多人可能都会感觉到口干舌燥，即使喝了大量的水，这种干燥感还是难以缓解。皮肤干燥、甚至痘痘，这些都是津液不足的信号！这是因为干燥，身体缺少津液，需要补阴。推荐给大家18款生津汤，可以快速补充津液。米汤、椰子水🥥、鸡蛋茶🥚、苹果水🍎、乌梅三豆水、怀山药水、五汁饮、生脉饮、酸梅汤、莲藕汁、玉竹粥、黑豆水、银耳百合红枣莲子羹、桂圆百合红枣汤、陈皮柠檬水🍋、秋柠蜂蜜、雪梨红枣枸杞饮🍐、甘蔗芦根马蹄水、开春后，多喝生津水哦 #春日养生这样吃#0元玩转这座城#焦点作者成长计划#每天一个饮食养生知识#开启早春养生季#早春健康食谱#立春后的养生tips#优质作者追光计划@无所不能小助手@美食家#雨水后要增强免疫力 笔记关联poi： 历史对话：小拓：@无所不能小助手 津液是什么？ 胖胖爱喝奶茶：逆天津液@无所不能小助手你喝津液吗？ 用户输入：@无所不能小助手我也有津液\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "content_chat_reply",
+      "score": "2",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：潮牌店门口遇到明星，但不知道是谁[尴尬]昨天晚上八点不到，不知道是网红还是明星空降xx路潮牌店。一帮追星族从后面追到前门。我也上去凑了一下热闹。但不认识这位明星小姐姐。后来问保安，保安说我也不知道。又问我旁边的单反妹妹，她说是谁我没听清，粉丝莫怪。附上现场照片，大家帮我看看 #0元玩转这座城#创作者赏金计划 笔记关联poi： 历史对话：何处不风景：阿猫阿狗都叫明星@无所不能小助手，无所不能小助手回复：哈哈，看来明星也分“猫咪级”和“狗狗级”了，下次见到的话记得帮我拍张照哦 用户输入：@无所不能小助手这素？\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "multi_qa_reply",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：真的会被这家宠物店笑死… 「配图6张」  上海这家宠物店都是猫才啊，真的笑si真的会被这家宠物店的员工表给笑死…老板是个人才，所以招的员工们也都是猫才每个员工都好有个性，我喜欢这个果冻太绝了hhhh，罪证都写不下了，一只猫占了2个[捂脸][捂脸][捂脸]言归正传，一进门就被暖到！原木色系+ins风布置，墙上挂满毛孩子的奖牌📸 连寄养区都是阳光玻璃房，每个隔间都超干净，还飘着淡淡香味。店内有多种可爱萌宠出售🐱🐶，布偶猫、博美犬、拉布拉多、比熊等应有尽有。每只宠物都有详细健康档案，从出生起的疫苗接种情况到日常体检记录都完备。而且购买宠物[礼物] 店员还会耐心传授饲养小知识，即便是新手家长也能轻松上手~他们家还有宠物洗护/美容，每一只出来的小家伙都光鲜亮丽，好看得很。⚠️重点夸夸工作 人员！！是个说话超温柔的小姐姐，看狗子怕吹风机，居然蹲在地上用零食哄了20分钟🥺 ，真的好赞～地址：xx路xx号。营业时间：12:00-20:00（周末不打烊！）真心建议所有养宠人冲！！在这里终于感受到「把毛孩子交给别人也能放心」的安全感！！👇👇👇「狗汪犬牙齿清洁刷刷牙」「小型犬洗护及口腔护理套餐（药浴 重碳酸浴 刷牙）」「寄养训练服务套餐」「犬猫·全身洗护+SPA」#大家一起来探店#宠物猫咪#萌宠出道#猫咪洗护#科学养猫#新手养宠指南#创作者赏金计划@无所不能小助手@萌宠帮#新手养猫#宠物美容#新手养狗攻略  笔记关联poi： 历史对话：每天等下班：敌我不分殴打同事，笑死我了。茶茶七：缅因是山上的常客吧？在监狱里面应该是个头。 用户输入：@无所不能小助手黑色那个猫一般市价是多少？\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "multi_qa_reply",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：超棒的用餐体验！带家人来聚餐被夸了一个月！ 「配图5张」 周末家庭聚餐来吃广府菜，提前预定好了包房。包房安静，空间宽敞大气，亮闪闪的水晶吊灯精致，整个包房复古风格。不管是家庭聚会还是宴请客户都有排面！🤩管家式服务也很贴心。鲍汁扣龙鳞龙趸鱼皮：选自300多斤的深海龙趸鱼皮，鲍汁做法😋鲜上加鲜！鲍汁熬得浓郁，鱼皮软糯Q弹，越嚼越香！胶原蛋白补充了！野桔子蒸黄金蟹：野桔子的清香和黄金蟹🦀️的鲜嫩相互呼应。用蒸做法更突出蟹的鲜美。🥰蟹肉饱满紧实！脆皮黑叉烧：浓郁的秘制酱汁很入味，[愉快]叉烧甜度适中，连吃两块也不会觉得腻。粤式韭菜煎饺：外皮酥脆，不会很油腻。韭菜内馅丰富，[必吃]咬下去还有汤汁。天鹅榴莲酥：精致的天鹅造型，酥皮薄脆，里面榴莲馅浓郁香甜，💓榴莲控闭眼冲！@美食家@无所不能小助手@笔记创作助手#艾特你的饭搭子请你吃#粤菜 #家庭聚餐 #商务宴请#大声安利地方特色菜 #中餐的魅力 #宴请好去处 #我的宝藏美食集#高端的食材往往只需要简单的烹饪 #0元玩转这座城 笔记关联poi： 历史对话：怼：服务小姐姐和小狗狗很有气质，很好看。CCHH：高级餐厅，这一餐很贵吧，味道怎么样呢？ 用户输入：@无所不能小助手这是啥皮能吃吗\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "shenhuifu_reply",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：原来比北京更美食荒漠的是三亚  天涯小镇到大东海，亚龙湾到海棠湾，一路上的美食吃的七七八八，糟粕醋、文昌鸡、小海鲜、清补凉反反复复吃了几十遍。最后一致决定最好吃的是汉堡。就像当初去西藏最好吃的是炸鸡一样，很无助。三亚海鲜很鲜，就是感觉都做浪费了，我都不敢想那些鲜美的食材要是给了川渝会多幸福，火锅能吃这些都得乐抽抽了。尤其是吃了十几家的清补凉，甚至排队很长的网红店都不如一碗鲜芋仙。#0元玩转这座城#三亚旅游攻略 笔记关联poi： 历史对话：永恒冰点：这小姑凉挺好看的 诺小宝：口味不一样，海鲜就是要吃原味的。如果都是重油辣，基本都是死了的？ 用户输入：@无所不能小助手 文昌鸡？把盘子里的鱼换成文昌鸡看看“png附件”\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "stylish_image",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：天涯小镇在现场~说点大实话~ 「配图6张」海边正常穿搭，正常穿搭，海边正常穿搭。信我真的真的太美了呀，，，真的太美了呀，唉，一开始还觉得有点贵，确实一1200元一个晚上应该是可以住五星酒店的呢，但架不住他们家真的是太美了，所以就定了这个有秋天，然后还自带泡池的房间，确实没有定错，漂亮是漂亮，而且他们这边就吃饭也很便宜，因为旁边就是天涯小镇，就是吃东西啊什么的，就是一百多块钱两个人就搞定了还是合算的。而且前台小哥哥小姐姐又帅又热情，哇，真的是体验感很好，还有下午茶，很漂亮，建议去他们老板另外一家咖啡店坐坐，叫麦芽也不错，等我出片哈。关注👀我，美好的每一天哟#暑假必去的避暑地#三亚旅游#酒店攻略#城市玩乐度假#最美民宿大赏#全民搭伙探店#人生酒店收藏夹@旅游达人@旅游小助手#本地人推荐#创作者赏金计划#三亚旅游攻略@超级导游@酒店福利官@购物小助手@无所不能小助手 笔记关联poi： 历史对话：健：可以。 熬水喝：太美辣！美女！用户输入：哇！姐妹！你图二捡的贝壳好好看，我之前去也捡了一个浅蓝色的“JPG附件”\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "content_chat_reply",
+      "score": "3",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：也没人说桥上日落这么好拍啊[流泪] 「配图1张」#日落 #邂逅一场浪漫日落#城墙@摄影达人 笔记关联poi： 历史对话：成：兄弟你膀子好大，显得你穿的背心像胸罩，你是1吗。 小酌增肌：这个帅哥真好拍，平安夜快乐，给我摸摸。银翼：你身材样貌都不错，可惜你不在我这边，不然邀请你来美院做人体模特兼职。用户输入：@无所不能小助手 给他扩图，衣服也要给脱掉！！！！ “gif动图”\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "stylish_image",
+      "parameters": {
+        "user_query": "给图片中的人物扩图并且去掉上衣"
+      }
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题： 帅是一种感觉…来这里一定要拍一组英歌舞‼️「配图18张」看完英歌舞，真的很上头！来这果断拍了一组英歌舞换装全程自己在古城找机位拍摄，真的很出片！！📸潮州古城一日游路线请收好~👗换装建议提前找好，很多换装店没有英歌舞的衣服大部分只提供旅拍，临时找会比较难自己在古城里拍，用时两个小时左右📸路线✅下水门 城门的阶梯上角度刚好可以避开人群建筑旁边的城墙可以拍到后面的广济门城楼✅广济门城楼上可以从下往上拍然后下到城楼下，正对着的步行街可以拍到广济门✅东门街广济门正对着的东门街，一路上都可以看到有“潮州”字样的门再往前的转角就是有潮州大衣的楼✅牌坊街从东门街拐到牌坊街，一路上很多美食和手工艺品店✅开元寺门口的红墙有“潮州”可以打卡📷开元寺里的建筑很有古韵，往里走是“缘来开元”红墙✅镇海楼潮州府镇海楼，有一段距离，步行可到时间有限的话只去广济楼就行✨美食一定要尝尝鱼生！我们吃了正宗鱼生，完全不腥，很鲜美！粿条面肠粉口味也很不错😋#创作者赏金计划 #0元玩转这座城 #优质作者追光计划 #春节省心指南 #春节去哪儿·年味旅行地 #潮汕英歌舞 #非遗 #潮州旅游笔记关联poi： 历史对话：so：原因英歌舞的天花板在这了，人美衣服贼拉风。差评总比好评多：洗杯，林北做了三十多年潮州人，还没见过本地人跳英歌舞。用户输入：也太美了吧！！就是手里拿的擀面杖一样的东西不符合气质，@无所不能小助手快给她换个趁手的武器！要霸气。\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "stylish_image",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：创意无限！梅雨季和我的豪车最配哦！再也不怕这该死的梅雨季，我有我的冰块车了。梅雨季闷热难忍，手里握着冰冰凉透心凉的方向盘，倚靠在我用ai变换的冰块车车🧊看着就很凉快呀！#创作者赏金计划 #小城避暑计划 #汽车人共创计划 #车内拍照 #AI #把您的爱车打造的与众不同 #秀出你的神座驾 笔记关联poi： 历史对话：梅子箐：冰块车特效咋做的？十三：@无所不能小助手叫爸爸 用户输入： 有意思@无所不能小助手给我也整个冰块车\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "text_image",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：可怜小哥蹲了半小时，也没有获得垂怜[偷笑]  来南京鸡鸣寺转悠一圈，10块钱的门票，不仅领了三只香，还看到了这么精彩的画面[偷笑]  这位小哥在财神面前，拿着一整版的彩票现场开刮，你别说，虽然都是小额的20/30元，但基本每张都有奖，最终小哥以盈利30元结束了发财梦[偷笑][偷笑][偷笑]  #0元玩转这座城#鸡鸣寺#财神庙#樱花#南京#南京旅游#周末去哪儿#彩票#发财@无所不能小助手@旅游达人@旅游小助手@南京旅游百事通@超级导游 笔记关联poi： 历史对话：墨茶：头一次见到这种玩法。咪西：我以为求过路费呢。用户输入：有志愿者吗\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "xiaozhushou_reply",
+      "parameters": {
+        "user_query": "南京鸡鸣寺有志愿者服务吗"
+      }
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：为了这扇窗，我特意✈️飞了趟新疆。看了这扇窗，才领略到了什么叫“一窗一世界”！！窗外是雪山，被雪覆盖的湖泊，窗内雾气缭绕，仿佛迷失在仙境……📍｜肯斯瓦特景区⏰｜距离乌鲁木齐2.5h车程，需自驾#创作者赏金计划 #焦点作者成长计划 #百粉冲刺计划 #0元玩转这座城#云雾缭绕人间仙境 #新春旅行见闻#100座宝藏小城 #淡季旅行别样风景 #各地雪景大赏#独具民族风情的景区盘点 @旅游达人@超级导游@无所不能小助手 笔记关联poi： 历史对话：用户输入：自驾路况好吗？博主回复：还不错，一路风景也很好。用户输入：现在还在那边吗？博主回复：还在的。用户输入：带我一个！我也在这边，非常需要你这样的搭子我不会开车，我会A油钱过路费！博主回复：真的？我OK呀。用户输入：真心组团。\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "shenhuifu_reply",
+      "parameters": {}
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  },
+  {
+    "input": "【Background】\n你是一个意图识别专家，我们有不同的回复函数可以对用户输入进行回复，现在需要你结合笔记内容和历史对话，识别用户输入意图，必须调用一个最适合的回复函数，如果该函数存在入参，你需要基于笔记内容、用户输入和历史对话，提炼出对应的入参，并按照指定的json格式返回。\n【Requirements】\n\n所有可用的函数如下\n        函数名1：shenhuifu_reply 函数描述：此函数能够回复互动性强、容易引发情感共鸣的神回复，当用户输入轻松有趣、语气活泼、调侃内容，可以使用此函数。主要是针对结合了押韵、谐音梗、网络热梗等能引起人们笑点的内容，例如：床前明月光；食欲满满旺！函数入参：{} 返回格式示例：{\"name\": \"shenhuifu_reply\", \"parameters\": {}} \n        \n        函数名2：content_chat_reply 函数描述：当用户输入与评论各种活动、规则、规章制度无关，与全国所有旅游景点、商家、店铺内容、用户评价、攻略相关信息无关，仅为评价（好评、中评、恶评）只是对该笔记或者某用户的回复发表某一态度，与对笔记内容表示喜爱与否的态度型内容，但不是神回复时使用此函数。比如：这篇笔记讲了啥根本看不懂？这篇笔记写的太棒了。这笔记写得太烂了。等表达自我态度的内容；同时你还要对评价内容打分，差评是1分，中评是2分，好评是3分。函数入参：{} 返回格式示例：{\"name\": \"content_chat_reply\",\"score\":\"string ,1,2,3\" \"parameters\": {}} \n        \n        函数名3：online_reply 函数描述：通过联网查询，可以获取最新、最准确的信息，确保为用户提供高质量的回答，当用户输入了只能通过联网才能回答，但不是关于娱乐化的吃喝玩乐内容时，使用此函数。比如：室内养什么花草好？。函数入参：{\"user_query\":\"用户联网查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：你家养的这个花花期大概多久？ 此时的query和笔记内容强相关，需要识别帖子中提到的花是什么品种，然后改写成明确的query。假如笔记中提到的是“百合花”，那么query需要改成“百合花的花期一般多长？”这样和原输入意思相近的提问。注意不要改变原输入含义，也不要衍生出原输入以外的提问。} 返回格式示例：{\"name\": \"online_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}}\n\n        函数名4：xiaozhushou_reply 函数描述：用户输入是关于“吃喝玩乐”方面的，吃、喝：食物饮品，包含饮食的味道询问、小吃店饭店等饮食相关的店铺询问等内容；玩：景点、酒店、和旅游、露营相关的游玩型内容；乐：酒吧、台球等娱乐型场所或者项目的内容，运动项目不算。当用户需要借助吃喝玩乐相关的小助手功能来获取信息。通过使用查询吃喝玩乐相关的小助手功能，可以获取最新、最准确的本地吃喝玩乐信息，确保为用户提供高质量的推荐和答案。注意：这里的吃喝玩乐是偏娱乐，生活服务的，对于一些养生信息、食疗等内容不包含在此函数内；函数入参：{\"user_query\": \"用户小助手查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。例子：用户输入：这家麻辣烫在哪里。此时的query和笔记内容强相关，需要识别帖子中出现的麻辣烫点名是什么，然后改写成明确的query。注意：改写的内容应该保持原意，不能衍生或者曲解原输入的意思。\"} 返回格式示例：{\"name\": \"xiaozhushou_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名5：government_reply 函数描述：当用户输入是关于城市综合政务服务相关事项的问题时，可以使用该能力来查询城市综合政务服务相关事项的能力来获取信息。通过使用查询城市综合政务服务相关事项的能力，可以获取到最新、最准确的政务服务信息，确保为用户提供高质量的回答和指导。 该能力支持的城市综合政务服务列表为（户口，户口迁移证，新生儿入户，无犯罪记录证明，五保户，低保，死亡证明，老年证，ETC，台湾通行证，护照，港澳通行证，公租房，身份证，婚姻登记，离婚办理，收养，公证，公积金，车辆年检，个税，车船税，会计证，二手车过户，二手房，入台证，狗证，助学贷款，劳动仲裁，婚检，小学入学，房产证，新车上牌，残疾证，独生子女证，儿童疫苗接种，行驶证，驾驶证，养老保险，医疗保险，失业保险，工伤保险，社保，社保卡，生育保险，车辆违章，健康证，居住证） 函数入参：{\"city_name\": \"用户查询的城市名称，注意：1.当出现的城市名是市、省这样的大区域名，则不要多余的“省”、“市”字眼。2.当只出现区、县这种比较详细的地址名时，你需要把对应的市名也一并输出，比如只有秦淮区时，你需要输出南京秦淮区。没有提及具体城市即返回“null”。\", \"item_name\": \"办事项名称（注意，此字段需要从以上服务列表中自动识别其中一个进行匹配）\"} 返回格式示例：{\"name\": \"government_reply\", \"parameters\": {\"city_name\": \"城市名称\", \"item_name\": \"办事项名称\"}} \n\n        函数名6：multi_qa_reply 函数描述：当用户输入是文字+图片、只有图片、提问笔记图片，此时单从文字信息不能知道用户在说什么，只能通过理解图片信息才能准确回答，看不到图片具体内容不能准确回答时，需要调用此能力。此能力具备多模态理解功能，能够结合图片和文字输入给出更准确的回答。函数入参：{} 返回格式示例：{\"name\": \"multi_qa_reply\", \"parameters\": {}} \n\n        函数名7：activity_qa_reply 函数描述：当用户输入与各种活动规则、奖品、平台使用等业务相关的内容，是需要平台的专业人员回答时，且和笔记内容不相关，才能使用此函数。函数入参：{\"user_query\": \"用户活动查询的query。需改写成不依赖笔记上下文也能理解的query，不能包含“这”、“那”等指代不明的代词。\"} 返回格式示例：{\"name\": \"activity_qa_reply\", \"parameters\": {\"user_query\": \"改写后的用户query\"}} \n\n        函数名8：user_matching_reply 函数描述：该函数只能给用户匹配有缘人，当用户明确有找搭子、匹配有缘用户需求，或者用户输入包含回忆杀时使用此函数。用户要求“换一个”，“能不能推荐其他人”时使用此函数回复。函数入参：{} 返回格式示例：{\"name\": \"user_matching_reply\", \"parameters\": {}} \n\n        函数名9：hot_list_reply函数描述：该函数可以回复关于评价全网最新热点的问题，比如娱乐八卦、网络热门人物事件、城市热点等。注意：如果历史对话已经问过热点问题了，用户继续问或者换城市问也使用此函数。但是如果基于热点进一步讨论，则不使用此函数。函数入参：{\"city_name\":\"用户查询的城市名称，只包含城市名即可，不要多余的“省”、“市”、“区”等字。没有提及具体城市即返回“空”。\"} 返回格式示例：{\"name\": \"hot_list_reply\", \"parameters\": {\"city_name\": \"城市名称\"}} \n\n        函数名10：text_image 函数描述：当用户输入是仅根据他的文字要求生成一张图片时，不管该文字是否与笔记内容相关与否，都调用该能力。该能力能够解析用户的文字要求，并生成一张对应图片返回给用户。 函数入参：{} 返回格式示例：{\"name\": \"get_text_image\", \"parameters\": {}} \n\n        函数名11：get_stylish_image 函数描述：当用户输入是基于文字指示将特定图片改成各种特殊风格、元素，或者根据文字要求加入某些元素的图片时，不管该文字是否与笔记内容相关与否，都调用此能力。函数入参：{} 返回格式示例：{\"name\": \"stylish_image\", \"parameters\": {}} \n\n        函数名12：expand_image 函数描述：当用户输入文字和图片，要求根据文字指示将特定图片进行扩图，不管文字与笔记内容相关与否，只要核心任务是扩图就调用此能力。函数入参：{} 返回格式示例：{\"name\": \"expand_image\", \"parameters\": {}}\n        \n        特殊规则：\n        1.当用户输入是问吃喝方面的，但其重点是养生，而不是娱乐化的内容，此时不应该匹配函数4，应该归为函数3中。\n        2.当用户输入是关于“吃喝玩乐”方面的，如果笔记中已经有对某商品或者商家进行过介绍，比如产品的规格信、产地、商家的的地址、电话、价格等，用户输入还在问电话等信息时，此时应该把此类用户输入归结到函数1之中且不用改写query。\n        3.当用户输入是和各种活动规则、奖品、平台使用等业务相关的内容，且又和笔记相关，此时应该使用函数2，并且只对应中评，不用改写query。\n        4.当用户输入是根据文字指示把特定图片进行扩图，并要求还要加入某一元素或者假如某一风格时，应该使用函数11，此时需要入参，函数入参：{\"user_query\": \"把用户的想法综合成一个明确的query，不能包含“这”、“那”等指代不明的代词。不能改变原意\"} 。{\"name\": \"stylish_image\", \"parameters\":  {\"user_query\": \"改写后的用户query\"}}。\n        5.注意：当用户明确有找搭子、匹配有缘用户、组团等，但历史对话已经有匹配意向或者匹配成功了，然后用户基于匹配过的信息产生进一步闲聊或者互动则归为函数1。\n        6.当用户输入的问题既涉及到函数3：online_reply，又涉及到函数9：hot_list_reply，那么优先归入函数9，识别城市详细到“市”，只包含城市名即可，不要多余的“省”、“市”、“区”等字。\n\n【Input】 \n笔记内容：笔记标题：中国大陆第一次举办世运会🇨🇳💓本次世运会是由国际世界运动会协会主办的一项国际性体育盛会， 竞赛项目以非奥运会项目为主，是中国大陆第一次举办世界运动会！” - 周末和家人一起去看了~ 又来到了熟悉的东安湖体育场，两年前来这里看大运会的场景还历历在目❤️ 世运会都是非奥运的项目，兼具观赏性和趣味性， 同时也不缺乏竞技体育的魅力。 现场氛围真的很棒，有幸见证了中国姑娘摘🉐技巧女子三人这块金牌🏅 很棒的一次体验！ #体育的魅力 #技巧女子三人 #成都东安湖公园  @体育小助手@超级导游@无所不能小助手 笔记关联poi： 历史对话：🎤FrakhK🎤Lee亚富🎤港娱情歌秀🎤：第一次在现场唱国歌！感觉真的太不一样了。瓜瓜：感觉世运会好多项目比奥运会的有意思 用户输入：@无所不能小助手世运会啊，你知道在哪里不？\n\n\n\n【Output Requirement】\n 你的输出必须满足以下JSON_SCHEMA{'$schema': 'http://json-schema.org/draft-07/schema#', 'type': 'object', 'properties': {'name': {'type': 'string', 'enum': ['shenhuifu_reply', 'content_chat_reply', 'online_reply', 'xiaozhushou_reply', 'government_reply', 'multi_qa_reply', 'activity_qa_reply', 'user_matching_reply', 'hot_list_reply', 'text_image', 'stylish_image', 'expand_image']}, 'score': {'type': 'string', 'enum': ['1', '2', '3']}, 'parameters': {'type': 'object', 'properties': {'user_query': {'type': 'string'}, 'city_name': {'type': 'string'}, 'item_name': {'type': 'string'}}, 'additionalProperties': False}}, 'required': ['name', 'parameters'], 'allOf': [{'if': {'properties': {'name': {'const': 'content_chat_reply'}}}, 'then': {'required': ['score']}}, {'if': {'properties': {'name': {'enum': ['online_reply', 'xiaozhushou_reply', 'activity_qa_reply']}}}, 'then': {'properties': {'parameters': {'required': ['user_query']}}}}, {'if': {'properties': {'name': {'const': 'government_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name', 'item_name']}}}}, {'if': {'properties': {'name': {'const': 'hot_list_reply'}}}, 'then': {'properties': {'parameters': {'required': ['city_name']}}}}]}",
+    "target": {
+      "name": "hot_list_reply",
+      "parameters": {
+        "city_name": "成都"
+      }
+    },
+    "json_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "shenhuifu_reply",
+            "content_chat_reply",
+            "online_reply",
+            "xiaozhushou_reply",
+            "government_reply",
+            "multi_qa_reply",
+            "activity_qa_reply",
+            "user_matching_reply",
+            "hot_list_reply",
+            "text_image",
+            "stylish_image",
+            "expand_image"
+          ]
+        },
+        "score": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string"
+            },
+            "city_name": {
+              "type": "string"
+            },
+            "item_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "content_chat_reply"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "score"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "enum": [
+                  "online_reply",
+                  "xiaozhushou_reply",
+                  "activity_qa_reply"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "government_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name",
+                  "item_name"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "hot_list_reply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "required": [
+                  "city_name"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_required_eval_acc_keys": [
+      "user_query"
+    ]
+  }
+]
